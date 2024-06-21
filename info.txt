@@ -1,0 +1,34 @@
+CREATE USER 'repl'@'%' IDENTIFIED BY 'repl';
+GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%';
+FLUSH TABLES WITH READ LOCK;
+UNLOCK TABLES;
+SHOW BINARY LOG STATUS;
+FLUSH LOGS;
+
+SET @@GLOBAL.enforce_gtid_consistency = WARN;
+SET @@GLOBAL.enforce_gtid_consistency = ON;
+SET @@GLOBAL.gtid_mode = OFF_PERMISSIVE;
+SET @@GLOBAL.gtid_mode = ON_PERMISSIVE;
+SET @@GLOBAL.gtid_mode = ON;
+CHANGE REPLICATION SOURCE TO 
+	SOURCE_HOST="m1", 
+	SOURCE_USER="repl", 
+    SOURCE_PASSWORD="repl",
+    SOURCE_AUTO_POSITION=1
+    FOR CHANNEL "m1";
+SHOW REPLICA STATUS;
+start replica;
+stop replica;
+select * from performance_schema.replication_applier_status_by_worker;
+
+create database demo2;
+use demo2;
+drop table demo2;
+create table demo2(id int not null primary key, name varchar(100) not null);
+insert into demo2 values (10, 'name');
+insert into demo2 select (select max(id) from demo2)+id, name from demo2;
+select * from demo2 order by id desc;
+update demo2 set name='m1';
+select * from demo21;
+create table demo21 as select * from demo2;
+
